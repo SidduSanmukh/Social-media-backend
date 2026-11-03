@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { RequestHandler } from "express";
+import { pinoHttp } from "pino-http";
+import { logger } from "../config/logger.js";
 
 export const requestIdMiddlware: RequestHandler = (_req, res, next) => {
   const requestId = randomUUID();
@@ -10,19 +12,13 @@ export const requestIdMiddlware: RequestHandler = (_req, res, next) => {
   next();
 };
 
-export const requestLogger: RequestHandler = (req, res,next) => {
-  const startTime = Date.now();
+export const requestLogger = pinoHttp({
+  logger,
 
-  res.on("finish", () => {
-    const durationMs = Date.now() - startTime;
-
-    console.log({
-      requestId: res.locals.requestId,
-      method: req.method,
-      path: req.path,
-      statusCode: res.statusCode,
-      durationMs,
-    })
-  })
-  next()
-}
+  genReqId: (req, res) => {
+    return res.getHeader("X-Request-Id")?.toString() ?? randomUUID();
+  },
+  customProps: (req, res) => ({
+    requestId: res.getHeader("X-Request-Id"),
+  }),
+});

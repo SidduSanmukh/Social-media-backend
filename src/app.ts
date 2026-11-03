@@ -5,6 +5,7 @@ import {
   requestIdMiddlware,
   requestLogger,
 } from "./moddleware/request.middleware.js";
+import { errorMiddleware } from "./moddleware/error.middleware.js";
 
 const app = express();
 
@@ -33,40 +34,43 @@ app.use((_req, res) => {
   });
 });
 
+app.use(errorMiddleware)
+
 //centralized error handler - must be last
-const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
-  if (res.headersSent) {
-    next(err);
-    return;
-  }
+// const errorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+//   if (res.headersSent) {
+//     next(err);
+//     return;
+//   }
+// 
+//   //Invalid JSON submitted by the client
+//   if (err instanceof SyntaxError && "body" in err) {
+//     res.status(400).json({
+//       error: {
+//         code: "InvalidA_JSON",
+//         message: "Request body contaions invalid JSON",
+//       },
+//     });
+//   }
+//   return;
+// 
+//   //Log internal details on the server, not in the response
+// 
+//   console.error({
+//     requestId: res.locals.requestId,
+//     error: err instanceof Error ? err.message : "Unlnown error",
+//   });
+// 
+//   res.status(500).json({
+//     error: {
+//       code: "InTERNAL_SERVER_ERROR",
+//       message: "An unexpected error occured",
+//       requestId: res.locals.requestId,
+//     },
+//   });
+// };
+// 
+// app.use(errorHandler);
 
-  //Invalid JSON submitted by the client
-  if (err instanceof SyntaxError && "body" in err) {
-    res.status(400).json({
-      error: {
-        code: "InvalidA_JSON",
-        message: "Request body contaions invalid JSON",
-      },
-    });
-  }
-  return;
-
-  //Log internal details on the server, not in the response
-
-  console.error({
-    requestId: res.locals.requestId,
-    error: err instanceof Error ? err.message : "Unlnown error",
-  });
-
-  res.status(500).json({
-    error: {
-      code: "InTERNAL_SERVER_ERROR",
-      message: "An unexpected error occured",
-      requestId: res.locals.requestId,
-    },
-  });
-};
-
-app.use(errorHandler);
 
 export default app;
